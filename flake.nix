@@ -1,7 +1,7 @@
 {
   description = "Weblate package and module";
 
-  inputs.nixpkgs.url = "github:NixOS/Nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:NixOS/Nixpkgs/nixos-21.11";
   inputs.poetry2nix.url = "github:nix-community/poetry2nix/master";
   inputs.poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   inputs.weblate.url = "github:WeblateOrg/weblate/weblate-4.9.1";
@@ -59,10 +59,8 @@
                 cargoSetupHook
               ]);
             });
-            filelock = super.filelock.overridePythonAttrs (old: {
-              postPatch = ''
-                substituteInPlace setup.py --replace 'setup()' 'setup(version="${old.version}")'
-              '';
+            typing-extensions = super.typing-extensions.overridePythonAttrs (old: {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.flit-core ];
             });
           }
         );
