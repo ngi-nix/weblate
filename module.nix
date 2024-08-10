@@ -38,7 +38,6 @@ let
         "LOCATION": "unix://${config.services.redis.servers.weblate.unixSocket}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PARSER_CLASS": "redis.connection.HiredisParser",
             "PASSWORD": None,
             "CONNECTION_POOL_KWARGS": {},
         },
@@ -106,7 +105,7 @@ let
   environment = {
     PYTHONPATH = "${settings_py}";
     DJANGO_SETTINGS_MODULE = "settings";
-    GI_TYPELIB_PATH = "${pkgs.pango.out}/lib/girepository-1.0:${pkgs.harfbuzz}/lib/girepository-1.0";
+    GI_TYPELIB_PATH = "${pkgs.pango.out}/lib/girepository-1.0:${pkgs.harfbuzz}/lib/girepository-1.0:${lib.getLib pkgs.glib}/lib/girepository-1.0:${pkgs.librsvg}/lib/girepository-1.0:${pkgs.gdk-pixbuf}/lib/girepository-1.0";
   };
   weblate-env = pkgs.writeShellScriptBin
     "weblate-env"
@@ -190,10 +189,6 @@ in
         assertion = cfg.smtp.createLocally -> cfg.smtp.host == "127.0.0.1";
         message = ''services.weblate.smtp.host should be "127.0.0.1" if you want to to use services.weblate.smtp.createLocally.'';
       }
-      {
-        assertion = builtins.compareVersions config.services.postgresql.package.version "15.0" == -1;
-        message = "Weblate doesn't work with PostgreSQL 15 and higher right now (currently ${config.services.postgresql.package.version}). This is a bug in the NixOS module, so feel free to open a PR.";
-      }
     ];
 
     services.nginx = {
@@ -228,7 +223,8 @@ in
         Type = "oneshot";
         User = "postgres";
         Group = "postgres";
-        ExecStart = ''
+        ExecStart = pkgs.writeShellScript "setup_weblate_postgresql" ''
+          ${pkgs.postgresql}/bin/psql weblate -c "CREATE EXTENSION IF NOT EXISTS btree_gin"
           ${pkgs.postgresql}/bin/psql weblate -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
         '';
       };
@@ -381,7 +377,8 @@ in
       ensureUsers = [
         {
           name = "weblate";
-          ensurePermissions."DATABASE weblate" = "ALL PRIVILEGES";
+          ensureDBOwnership = true;
+          ensureClauses.createdb = true;
         }
       ];
       ensureDatabases = [ "weblate" ];

@@ -1,19 +1,21 @@
 diff --git a/weblate/utils/lock.py b/weblate/utils/lock.py
-index 53c1486bc9..a0a5fc5a74 100644
+index 5704bf9..9ca873f 100644
 --- a/weblate/utils/lock.py
 +++ b/weblate/utils/lock.py
-@@ -43,8 +43,6 @@ class WeblateLock:
+@@ -42,9 +42,7 @@ class WeblateLock:
+             # Prefer Redis locking as it works distributed
              self._name = self._format_template(cache_template)
              self._lock = cache.lock(
-                 key=self._name,
+-                key=self._name,
 -                expire=3600,
 -                auto_renewal=True,
++                key=self._name
              )
              self._enter_implementation = self._enter_redis
          else:
 @@ -62,7 +60,7 @@ class WeblateLock:
  
-     def _enter_redis(self):
+     def _enter_redis(self) -> None:
          try:
 -            lock_result = self._lock.acquire(timeout=self._timeout)
 +            lock_result = self._lock.acquire()

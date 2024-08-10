@@ -6,9 +6,9 @@
     flake-utils.url = "github:numtide/flake-utils";
     poetry2nix.url = "github:nix-community/poetry2nix";
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
-    weblate.url = "github:WeblateOrg/weblate/weblate-5.0.2";
+    weblate.url = "github:WeblateOrg/weblate/weblate-5.5.5";
     weblate.flake = false;
-    aeidon-src.url = "github:otsaloma/gaupol/1.12";
+    aeidon-src.url = "github:otsaloma/gaupol/1.14.1";
     aeidon-src.flake = false;
   };
 
@@ -33,13 +33,8 @@
                 pyproject = ./pyproject.toml;
                 poetrylock = ./poetry.lock;
                 patches = [
-                  # The default timeout for the celery check is much too short upstream, so
-                  # we increase it. I guess this is due to the fact that we test the setup
-                  # very early into the initialization of the server, so the load might be
-                  # higher compared to production setups?
-                  ./longer-celery-wait-time.patch
                   # FIXME This shouldn't be necessary and probably has to do with some dependency mismatch.
-                  ./cache.lock.patch
+                  ./weird_redis_lock.diff
                 ];
                 meta = with pkgs.lib; {
                   description = "Web based translation tool with tight version control integration";
@@ -61,9 +56,6 @@
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.setuptools ];
                     });
                     phply = super.phply.overridePythonAttrs (old: {
-                      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.setuptools ];
-                    });
-                    pygobject = super.pygobject.overridePythonAttrs (old: {
                       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.setuptools ];
                     });
                     pyicumessageformat = super.pyicumessageformat.overridePythonAttrs (old: {
@@ -103,6 +95,7 @@
                         let
                           getCargoHash = version: {
                             "0.2.14" = "sha256-EzlwSic1Qgs4NZAde/KWg0Qjs+PNEPcnE8HyIPoYZQ0=";
+                            "0.2.17" = "sha256-WomlVzKOUfcgAWGJInSvZn9hm+bFpgc4nJbRiyPCU64=";
                           }.${version};
                         in
                         pkgs.rustPlatform.fetchCargoTarball {
@@ -137,7 +130,7 @@
                         cargoDeps = pkgs.rustPlatform.fetchCargoTarball {
                           inherit (old) src;
                           name = "${old.pname}-${old.version}";
-                          hash = "sha256-/sel54PV58y6oUgIzHXSCL4RMljPL9kZ6ER/pRTAjAI=";
+                          hash = "sha256-CIt/ChNcoqKln6PgeTGp9pfmIWlJj+c5SCPtBhsnT6U=";
                         };
 
                       }
