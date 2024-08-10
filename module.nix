@@ -13,7 +13,7 @@ let
     # TLS terminates at the reverse proxy, but this setting controls how links to weblate are generated.
     ENABLE_HTTPS = True
     DATA_DIR = "/var/lib/weblate"
-    STATIC_ROOT = "${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/static/"
+    STATIC_ROOT = "${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/static/"
     MEDIA_ROOT = "/var/lib/weblate/media"
     COMPRESS_ROOT = "/var/lib/weblate/compressor-cache/"
     DEBUG = False
@@ -71,7 +71,7 @@ let
   '';
   settings_py = pkgs.runCommand "weblate_settings.py" { } ''
     mkdir -p $out
-    cat ${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/settings_example.py > $out/settings.py
+    cat ${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/settings_example.py > $out/settings.py
     cat >> $out/settings.py <<EOF${weblateConfig}EOF
   '';
   uwsgiConfig.uwsgi = {
@@ -88,7 +88,7 @@ let
     chown-socket = "weblate:weblate";
     uid = "weblate";
     gid = "weblate";
-    wsgi-file = "${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/wsgi.py";
+    wsgi-file = "${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/wsgi.py";
     pyhome = pkgs.weblate.dependencyEnv;
 
     # Some more recommendations by upstream:
@@ -204,8 +204,8 @@ in
         enableACME = true;
 
         locations = {
-          "= /favicon.ico".alias = "${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/static/favicon.ico";
-          "/static/".alias = "${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/static/";
+          "= /favicon.ico".alias = "${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/static/favicon.ico";
+          "/static/".alias = "${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/static/";
           "/static/CACHE/".alias = "/var/lib/weblate/compressor-cache/CACHE/";
           "/media/".alias = "/var/lib/weblate/media/";
           "/".extraConfig = ''
@@ -300,7 +300,7 @@ in
           Type = "forking";
           User = "weblate";
           Group = "weblate";
-          WorkingDirectory = "${pkgs.weblate}/lib/${pkgs.python3.libPrefix}/site-packages/weblate/";
+          WorkingDirectory = "${pkgs.weblate}/lib/${pkgs.weblate.python.libPrefix}/site-packages/weblate/";
           RuntimeDirectory = "celery";
           RuntimeDirectoryPreserve = "restart";
           LogsDirectory = "celery";
@@ -337,10 +337,13 @@ in
         NotifyAccess = "all";
         ExecStart =
           let
-            uwsgi = pkgs.uwsgi.override { plugins = [ "python3" ]; };
+            uwsgi = pkgs.uwsgi.override {
+              plugins = [ "python3" ];
+              python3 = pkgs.weblate.python;
+            };
             jsonConfig = pkgs.writeText "uwsgi.json" (builtins.toJSON uwsgiConfig);
           in
-          "${uwsgi}/bin/uwsgi --json ${jsonConfig}";
+            "${uwsgi}/bin/uwsgi --json ${jsonConfig}";
         Restart = "on-failure";
         KillSignal = "SIGTERM";
         WorkingDirectory = pkgs.weblate;
