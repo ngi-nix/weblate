@@ -1,3 +1,5 @@
+**This effort was superseeded [by the NixOS module in this PR](https://github.com/NixOS/nixpkgs/pull/325541). Please use it's branch or, as soon as it's merged, the official NixOS module.**
+
 # About this flake
 
 This Nix flake packages [Weblate](https://weblate.org/en/), a web based translation tool. It is fully usable and tested regularly.
